@@ -5,3 +5,6 @@ opencv-python
 scikit-learn
 numpy
 python-multipart
+google-genai
+python-dotenv
+joblib
