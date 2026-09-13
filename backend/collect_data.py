@@ -13,7 +13,7 @@ hands_detector = mp_hands.Hands(
 )
 
 # Change this to whatever sign you're recording right now
-CURRENT_LABEL = "AGAIN"
+CURRENT_LABEL = "WASHROOM"
 
 DATA_FILE = "../data/training_data.csv"
 

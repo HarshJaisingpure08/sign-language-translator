@@ -1,87 +1,43 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { HAND_LANDMARKS_LEFT, FACE_LANDMARKS } from '../data/mockData';
 
 /**
- * WebcamFrame — simulated webcam with hand/face landmark overlays.
+ * WebcamFrame — now shows a REAL live camera feed via a <video> element,
+ * instead of the simulated gradient background + landmark dots.
  *
- * Props (all replaceable by real ML inference later):
- *   handDetection: { active: boolean, landmarks: Array<{x,y}> }
- *   faceDetection: { active: boolean, landmarks: Array<{x,y}> }
- *   currentSign: { label: string } | null
- *   isActive: boolean
- *   children: ReactNode  (extra overlay layers)
+ * New prop: videoRef — a ref (from useRef()) that gets attached to the
+ * <video> element, so the parent component can access the live stream
+ * to capture frames from it.
+ *
+ * handDetected / faceDetected — simple booleans (not landmark arrays
+ * anymore) telling us whether a hand/face was found in the LAST captured
+ * frame, just to drive the status indicators.
  */
 export default function WebcamFrame({
-  handDetection = { active: true, landmarks: HAND_LANDMARKS_LEFT },
-  faceDetection  = { active: true, landmarks: FACE_LANDMARKS },
+  videoRef,
+  handDetected = false,
+  faceDetected = false,
   currentSign    = null,
   isActive       = true,
   children,
 }) {
   return (
-    <div className="webcam-frame" style={{ aspectRatio: '4/3' }}>
-      {/* Dark background simulating camera */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(160deg, #1a2825 0%, #0e1614 60%, #141c1a 100%)',
-      }} />
+    <div className="webcam-frame" style={{ aspectRatio: '4/3', position: 'relative', overflow: 'hidden' }}>
+      {/* REAL live video feed */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover',
+          transform: 'scaleX(-1)', // mirror, feels more natural (like a real mirror)
+          background: '#0e1614',
+        }}
+      />
 
-      {/* Subtle scanline texture */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.012) 3px, rgba(255,255,255,0.012) 4px)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Person silhouette */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        pointerEvents: 'none',
-      }}>
-        <svg width="55%" viewBox="0 0 200 280" fill="none" style={{ opacity: 0.18 }}>
-          {/* Head */}
-          <ellipse cx="100" cy="40" rx="34" ry="38" fill="#8FA99A"/>
-          {/* Neck */}
-          <rect x="88" y="74" width="24" height="20" rx="6" fill="#8FA99A"/>
-          {/* Torso */}
-          <path d="M50 94 C50 94, 70 90, 100 90 C130 90, 150 94, 150 94 L158 200 L42 200 Z" fill="#8FA99A"/>
-          {/* Left arm */}
-          <path d="M55 108 L20 170 L34 176 L62 124" fill="#8FA99A"/>
-          {/* Right arm — raised in sign position */}
-          <path d="M145 108 L172 150 L160 158 L138 120" fill="#8FA99A"/>
-          {/* Left hand */}
-          <ellipse cx="26" cy="180" rx="14" ry="10" fill="#8FA99A"/>
-          {/* Right hand — signing */}
-          <ellipse cx="167" cy="162" rx="14" ry="10" fill="#8FA99A" transform="rotate(-20 167 162)"/>
-        </svg>
-      </div>
-
-      {/* Hand landmark overlay */}
-      {handDetection.active && handDetection.landmarks.map((pt, i) => (
-        <motion.div
-          key={`h-${i}`}
-          className="landmark-dot hand"
-          style={{ left: `${pt.x * 100}%`, top: `${pt.y * 100}%` }}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 0.85, scale: 1 }}
-          transition={{ delay: i * 0.025, duration: 0.3 }}
-        />
-      ))}
-
-      {/* Face landmark overlay */}
-      {faceDetection.active && faceDetection.landmarks.map((pt, i) => (
-        <motion.div
-          key={`f-${i}`}
-          className="landmark-dot face"
-          style={{ left: `${pt.x * 100}%`, top: `${pt.y * 100}%` }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.7 }}
-          transition={{ delay: 0.4 + i * 0.03, duration: 0.3 }}
-        />
-      ))}
-
-      {/* Corner markers */}
+      {/* Corner markers - kept for visual polish */}
       {['tl', 'tr', 'bl', 'br'].map(pos => (
         <div key={pos} className={`corner-marker ${pos}`} aria-hidden="true" />
       ))}
@@ -146,16 +102,15 @@ export default function WebcamFrame({
         )}
       </AnimatePresence>
 
-      {/* Detection labels (HAND / FACE / HEAD) */}
+      {/* Detection labels (HAND / FACE) - now driven by REAL detection state */}
       <div style={{
         position: 'absolute', top: '42%', right: 16,
         display: 'flex', flexDirection: 'column', gap: '6px',
         pointerEvents: 'none',
       }}>
         {[
-          { label: 'HAND', active: handDetection.active, color: 'var(--clay)' },
-          { label: 'FACE', active: faceDetection.active, color: 'var(--mustard)' },
-          { label: 'HEAD', active: faceDetection.active, color: 'var(--sage)' },
+          { label: 'HAND', active: handDetected, color: 'var(--clay)' },
+          { label: 'FACE', active: faceDetected, color: 'var(--mustard)' },
         ].map(({ label, active, color }) => (
           <div key={label} style={{
             display: 'flex', alignItems: 'center', gap: 5,
@@ -172,7 +127,6 @@ export default function WebcamFrame({
         ))}
       </div>
 
-      {/* Extra children (e.g. grid overlay, etc.) */}
       {children}
     </div>
   );
