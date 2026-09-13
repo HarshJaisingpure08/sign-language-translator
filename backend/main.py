@@ -2,6 +2,14 @@
 Entry point - creates the app, sets up CORS, and plugs in the routers.
 """
 
+import sys
+from pathlib import Path
+
+# Ensure backend directory is in sys.path for robust module resolution
+backend_dir = str(Path(__file__).resolve().parent)
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import predict, sentence, facial_marker, translate_session
