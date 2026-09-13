@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { FACIAL_MARKER_STATES } from '../data/mockData';
 
-// Change this if your backend runs somewhere else later (e.g. after deployment)
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 
 const CAPTURE_INTERVAL_MS = 1200; // how often we grab a frame and check for a sign
 const MIN_CONFIDENCE = 0.5;       // ignore predictions the model isn't confident about
