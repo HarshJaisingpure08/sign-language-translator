@@ -1,6 +1,5 @@
-backend
-requirements.txt
-main.py
-app
-.python-version
-data
+/backend/
+/requirements.txt
+/main.py
+/app/
+/.python-version
