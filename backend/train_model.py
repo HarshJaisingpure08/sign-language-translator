@@ -1,19 +1,25 @@
 import csv
+from pathlib import Path
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
 
-DATA_FILE = "../data/training_data.csv"
-MODEL_OUTPUT_PATH = "app/models/classifier.pkl"
+BASE_DIR = Path(__file__).resolve().parent
+DATA_FILE = BASE_DIR.parent / "data" / "training_data.csv"
+MODEL_OUTPUT_PATH = BASE_DIR / "app" / "models" / "classifier.pkl"
 EXPECTED_FEATURE_LENGTH = 126
 
 labels = []
 features = []
 skipped_rows = 0
 
-with open(DATA_FILE) as f:
+if not DATA_FILE.exists():
+    print(f"Error: Dataset not found at {DATA_FILE}")
+    exit(1)
+
+with open(DATA_FILE, "r", encoding="utf-8") as f:
     reader = csv.reader(f)
     header = next(reader)
 
@@ -22,7 +28,11 @@ with open(DATA_FILE) as f:
             skipped_rows += 1
             continue
 
-        row_features = [float(x) for x in row[1:]]
+        try:
+            row_features = [float(x) for x in row[1:]]
+        except ValueError:
+            skipped_rows += 1
+            continue
 
         if len(row_features) != EXPECTED_FEATURE_LENGTH:
             print(f"Skipping row {i} (label: {row[0]}) - has {len(row_features)} values, expected {EXPECTED_FEATURE_LENGTH}")
@@ -55,5 +65,6 @@ print(f"\nAccuracy on unseen test data: {accuracy * 100:.1f}%")
 print("\nDetailed performance per sign:")
 print(classification_report(y_test, predictions))
 
+MODEL_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 joblib.dump(model, MODEL_OUTPUT_PATH)
 print(f"\nModel saved to {MODEL_OUTPUT_PATH}")

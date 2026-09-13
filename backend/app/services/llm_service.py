@@ -1,49 +1,67 @@
 """
 Handles turning a raw list of detected sign words into a natural
-sentence, using Google's Gemini API - now enhanced with facial
-grammar context (question / emphasis / neutral).
+sentence using Google's Gemini API, enhanced with facial grammar context.
 """
 
 import os
-from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+_api_key = os.getenv("GEMINI_API_KEY")
+
+_client = None
+if _api_key and _api_key != "your_gemini_api_key_here":
+    try:
+        from google import genai
+        _client = genai.Client(api_key=_api_key)
+    except Exception as e:
+        print(f"Warning: Failed to initialize Gemini client: {e}")
+
+
+def _fallback_sentence(words: list[str], facial_context: str) -> str:
+    if not words:
+        return ""
+    joined = " ".join(words)
+    if facial_context == "question":
+        return f"{joined}?"
+    if facial_context == "emphasis":
+        return f"{joined}!"
+    return f"{joined}."
 
 
 def smooth_words_into_sentence(words: list[str], facial_context: str = "neutral") -> str:
     """
-    Sends the detected sign words to Gemini, along with the facial
-    grammar context, and asks it to form a natural sentence that
-    reflects that context (e.g., phrased as a question if the
-    signer's expression indicated one).
+    Sends detected sign words to Gemini with facial grammar context,
+    returning a polished, natural sentence.
     """
-    word_list = ", ".join(words)
+    if not words:
+        return ""
 
-    # This is the key change: we tell the LLM WHAT the facial expression
-    # meant grammatically, and ask it to actually use that information -
-    # not just decoration, but a real instruction that changes the output.
+    if not _client:
+        return _fallback_sentence(words, facial_context)
+
+    word_list = ", ".join(words)
     context_instruction = {
-        "question": "The signer's facial expression (raised eyebrows) indicates this is a QUESTION. Phrase the sentence as a question.",
+        "question": "The signer's facial expression (raised eyebrows) indicates this is a QUESTION. Phrase the sentence as a natural question.",
         "emphasis": "The signer's facial expression (furrowed brows / head tilt) indicates EMPHASIS or urgency. Phrase the sentence with appropriate emphasis or urgency.",
-        "neutral": "The signer's facial expression was neutral. Phrase this as a normal statement.",
-    }.get(facial_context, "Phrase this as a normal statement.")
+        "neutral": "The signer's facial expression was neutral. Phrase this as a natural statement.",
+    }.get(facial_context, "Phrase this as a natural statement.")
 
     prompt = (
-        f"These are words detected from sign language, in the order signed: {word_list}. "
+        f"These are words detected from sign language in the order signed: {word_list}. "
         f"{context_instruction} "
         f"Turn them into one natural, grammatically correct sentence that reflects this context. "
-        f"Only output the sentence itself, nothing else - no explanation, no quotes."
+        f"Only output the sentence itself, nothing else - no explanation, no markdown quotes."
     )
 
     try:
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
+        response = _client.models.generate_content(
+            model="gemini-2.0-flash",
             contents=prompt,
         )
-        return response.text.strip()
+        text = response.text.strip().strip('"').strip("'")
+        return text if text else _fallback_sentence(words, facial_context)
     except Exception as e:
-        print(f"LLM call failed: {e}")
-        return " ".join(words)
+        print(f"LLM call error: {e}")
+        return _fallback_sentence(words, facial_context)

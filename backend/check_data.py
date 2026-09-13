@@ -1,7 +1,14 @@
 import csv
+from pathlib import Path
 from collections import Counter
 
-with open('../data/training_data.csv') as f:
+DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "training_data.csv"
+
+if not DATA_FILE.exists():
+    print(f"Dataset not found at {DATA_FILE}")
+    exit(1)
+
+with open(DATA_FILE, "r", encoding="utf-8") as f:
     reader = csv.reader(f)
     header = next(reader)
 

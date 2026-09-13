@@ -1,11 +1,8 @@
 """
-The 'plating' endpoint - combines sign detection results and facial
-context (both already gathered by the frontend from earlier calls)
-into one final, complete translation response.
+Combines sign detection results and facial grammar context into a final translation response.
 """
 
 from fastapi import APIRouter
-
 from app.services import llm_service
 from app.schemas.schemas import TranslationSessionRequest, TranslationSessionResponse
 
@@ -13,13 +10,11 @@ router = APIRouter()
 
 
 @router.post("/translate-session", response_model=TranslationSessionResponse)
-async def translate_session(request: TranslationSessionRequest):
+def translate_session(request: TranslationSessionRequest):
     sentence = llm_service.smooth_words_into_sentence(
         request.words, request.facial_context
     )
 
-    # Average confidence across all detected signs in this session,
-    # so the frontend has one representative number to display.
     avg_sign_confidence = None
     if request.sign_confidences:
         avg_sign_confidence = round(

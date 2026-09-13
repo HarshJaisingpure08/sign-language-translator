@@ -1,8 +1,9 @@
-import cv2
-import mediapipe as mp
 import csv
 import os
+from pathlib import Path
 import time
+import cv2
+import mediapipe as mp
 
 mp_hands = mp.solutions.hands
 hands_detector = mp_hands.Hands(
@@ -15,7 +16,7 @@ hands_detector = mp_hands.Hands(
 # Change this to whatever sign you're recording right now
 CURRENT_LABEL = "WASHROOM"
 
-DATA_FILE = "../data/training_data.csv"
+DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "training_data.csv"
 
 # --- Auto-capture settings ---
 AUTO_CAPTURE_COUNT = 20      # how many samples to grab in one burst
@@ -38,14 +39,15 @@ def save_sample(frame, label):
     features = []
     for hand_landmarks in results.multi_hand_landmarks:
         for lm in hand_landmarks.landmark:
-            features.extend([lm.x, lm.y, lm.z])
+            features.extend([float(lm.x), float(lm.y), float(lm.z)])
 
     expected_hand_values = 21 * 3 * 2
     while len(features) < expected_hand_values:
         features.append(0.0)
 
-    file_exists = os.path.isfile(DATA_FILE)
-    with open(DATA_FILE, mode='a', newline='') as f:
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    file_exists = DATA_FILE.is_file()
+    with open(DATA_FILE, mode='a', newline='', encoding="utf-8") as f:
         writer = csv.writer(f)
         if not file_exists:
             header = ["label"] + [f"f{i}" for i in range(len(features))]

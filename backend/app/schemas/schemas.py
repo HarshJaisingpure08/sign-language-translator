@@ -1,5 +1,5 @@
-from pydantic import BaseModel
 from typing import Optional
+from pydantic import BaseModel, Field
 
 
 class LandmarkResponse(BaseModel):
@@ -14,12 +14,14 @@ class PredictionResponse(BaseModel):
 
 
 class SentenceRequest(BaseModel):
-    words: list[str]
+    words: list[str] = Field(default_factory=list)
+    facial_context: str = "neutral"  # "question" | "emphasis" | "neutral"
 
 
 class SentenceResponse(BaseModel):
     sentence: str
     note: Optional[str] = None
+
 
 class CalibrationResponse(BaseModel):
     calibrated: bool
@@ -32,19 +34,16 @@ class FacialMarkerResponse(BaseModel):
     eyebrow_ratio: Optional[float] = None
     tilt_angle: Optional[float] = None
 
-class SentenceRequest(BaseModel):
-    words: list[str]
-    facial_context: str = "neutral"  # "question" | "emphasis" | "neutral"
 
 class TranslationSessionRequest(BaseModel):
-    words: list[str]
-    sign_confidences: list[float] = []  # confidence for each word, same order
-    facial_context: str = "neutral"     # "question" | "emphasis" | "neutral"
+    words: list[str] = Field(default_factory=list)
+    sign_confidences: list[float] = Field(default_factory=list)
+    facial_context: str = "neutral"
     facial_confidence: Optional[float] = None
 
 
 class TranslationSessionResponse(BaseModel):
-    raw_sequence: list[str]
+    raw_sequence: list[str] = Field(default_factory=list)
     facial_context: str
     sentence: str
     sign_confidence: Optional[float] = None
