@@ -143,14 +143,9 @@ export default function Landing() {
         borderBottom: '1px solid var(--ink-10)',
       }}>
         <div className="container">
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: 'clamp(3rem, 6vw, 6rem)',
-            alignItems: 'center',
-          }}>
+          <div className="hero-grid">
             {/* Left — copy */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <motion.div {...fadeUp} transition={{ duration: 0.45 }}>
                 <span className="label-mono text-clay" style={{ marginBottom: '1.25rem', display: 'block' }}>
                   Two-way sign language assistant
@@ -159,11 +154,12 @@ export default function Landing() {
 
               <motion.h1
                 className="display-xl"
+                style={{ fontSize: 'clamp(2.5rem, 5.5vw, 5rem)' }}
                 initial={{ opacity: 0, y: 32 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.08 }}
               >
-                Communication,<br />
+                <span style={{ whiteSpace: 'nowrap' }}>Communication</span><br />
                 <span style={{ fontStyle: 'italic', color: 'var(--clay)' }}>without barriers.</span>
               </motion.h1>
 
@@ -433,7 +429,7 @@ export default function Landing() {
                     transition={{ delay: i * 0.12, duration: 0.35 }}
                   >
                     <p className="label-mono" style={{
-                      color: i === 0 || i === 3 ? 'var(--ivory)' : 'rgba(245,241,232,0.7)',
+                      color: i === 0 ? 'var(--ivory)' : i === 3 ? 'var(--ink)' : 'rgba(245,241,232,0.7)',
                       textAlign: 'center',
                     }}>
                       {step}
@@ -490,7 +486,7 @@ export default function Landing() {
         <div className="container flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <span className="body-sm text-ink-30">© 2025 Sign Translator. Built for communication.</span>
           <span className="label-mono text-ink-30" style={{ fontSize: '0.65rem' }}>
-            Frontend demo · No backend yet
+            Sign Translator · v1.0
           </span>
         </div>
       </footer>
